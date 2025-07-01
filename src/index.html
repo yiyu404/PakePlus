@@ -1,32 +1,1574 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="stylesheet" href="styles.css" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus App</title>
-        <script type="module" src="/main.js" defer></script>
-    </head>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CWT2.0设备选型系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <body>
-        <main class="container">
-            <h1>Welcome to PakePlus</h1>
-            <form class="row" id="greet-form">
-                <input id="inputValue" placeholder="Enter a something..." />
-            </form>
-            <div class="resultBox">
-                <span>result: </span>
-                <span id="result"></span>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e4a78 0%, #2563aa 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 20px;
+            padding: 20px;
+            align-items: start;
+        }
+
+        .input-panel {
+            padding: 30px;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            border: 1px solid #e8e8e8;
+            height: fit-content;
+        }
+
+        .result-panel {
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            border: 1px solid #e8e8e8;
+            height: fit-content;
+            overflow-y: auto;
+        }
+
+        /* 当显示结果时，让右侧面板高度与左侧相同 */
+        .result-container.show ~ .result-panel,
+        .result-panel:has(.result-container.show) {
+            height: auto;
+        }
+
+        /* JavaScript 将动态设置这个类 */
+        .result-panel.match-left-height {
+            max-height: var(--left-panel-height);
+            overflow-y: auto;
+        }
+
+        /* 自定义滚动条样式 */
+        .result-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .result-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .result-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #2563aa 0%, #1e4a78 100%);
+            border-radius: 4px;
+        }
+
+        .result-panel::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #1e4a78 0%, #1a3d66 100%);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e4a78;
+            font-size: 1em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2563aa;
+            box-shadow: 0 0 10px rgba(37, 99, 170, 0.2);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .parameters-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f7ff;
+            border-radius: 8px;
+            border-left: 4px solid #2563aa;
+            display: none;
+        }
+
+        .parameters-section h4 {
+            color: #1e4a78;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+
+        .parameter-row {
+            display: grid;
+            grid-template-columns: 1fr 100px;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .parameter-row label {
+            font-size: 0.9em;
+            font-weight: normal;
+            margin-bottom: 0;
+        }
+
+        .parameter-row input {
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #2563aa 0%, #1e4a78 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(30, 74, 120, 0.3);
+        }
+
+        .result-container {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .result-container.show {
+            opacity: 1;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #52a863 0%, #73b87c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .result-item {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .result-item h3 {
+            color: #1e4a78;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-item p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .spec-table th,
+        .spec-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .spec-table th {
+            background: linear-gradient(135deg, #2563aa 0%, #1e4a78 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .spec-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .spec-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .no-result {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+
+        /* 下载按钮样式 */
+        .download-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            min-width: 160px;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .download-btn.scheme {
+            background: linear-gradient(135deg, #dc4040 0%, #b83333 100%);
+        }
+
+        .download-btn.drawing {
+            background: linear-gradient(135deg, #00a693 0%, #008577 100%);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+        }
+
+        .download-btn:active {
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .input-panel,
+            .result-panel {
+                padding: 20px;
+                height: auto !important;
+                max-height: none !important;
+            }
+
+            .result-panel {
+                max-height: 70vh !important;
+                overflow-y: auto;
+            }
+
+            .download-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .download-btn {
+                justify-content: center;
+                min-width: 100%;
+            }
+
+            .result-item {
+                padding: 20px;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" alt="Logo" style="height: 60px; margin-bottom: 10px;">
+            <h1>CWT2.0设备选型系统</h1>
+            <p>专业的污水处理设备智能选型平台</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-panel">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h2 style="color: #1e4a78; font-size: 1.4em; margin-bottom: 8px;">📋 选型参数输入</h2>
+                    <p style="color: #666; font-size: 0.9em;">请填写以下信息进行设备选型</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="projectProvince">项目地点</label>
+                    <select id="projectProvince">
+                        <option value="">请选择省市</option>
+                        <option value="北京市">北京市</option>
+                        <option value="天津市">天津市</option>
+                        <option value="上海市">上海市</option>
+                        <option value="重庆市">重庆市</option>
+                        <option value="河北省">河北省</option>
+                        <option value="山西省">山西省</option>
+                        <option value="辽宁省">辽宁省</option>
+                        <option value="吉林省">吉林省</option>
+                        <option value="黑龙江省">黑龙江省</option>
+                        <option value="江苏省">江苏省</option>
+                        <option value="浙江省">浙江省</option>
+                        <option value="安徽省">安徽省</option>
+                        <option value="福建省">福建省</option>
+                        <option value="江西省">江西省</option>
+                        <option value="山东省">山东省</option>
+                        <option value="河南省">河南省</option>
+                        <option value="湖北省">湖北省</option>
+                        <option value="湖南省">湖南省</option>
+                        <option value="广东省">广东省</option>
+                        <option value="海南省">海南省</option>
+                        <option value="四川省">四川省</option>
+                        <option value="贵州省">贵州省</option>
+                        <option value="云南省">云南省</option>
+                        <option value="陕西省">陕西省</option>
+                        <option value="甘肃省">甘肃省</option>
+                        <option value="青海省">青海省</option>
+                        <option value="台湾省">台湾省</option>
+                        <option value="内蒙古自治区">内蒙古自治区</option>
+                        <option value="广西壮族自治区">广西壮族自治区</option>
+                        <option value="西藏自治区">西藏自治区</option>
+                        <option value="宁夏回族自治区">宁夏回族自治区</option>
+                        <option value="新疆维吾尔自治区">新疆维吾尔自治区</option>
+                        <option value="香港特别行政区">香港特别行政区</option>
+                        <option value="澳门特别行政区">澳门特别行政区</option>
+                        <option value="海外地区">海外地区</option>
+                    </select>
+                    <input type="text" id="projectAddress" placeholder="请输入详细地址..." style="font-size: 16px; margin-top: 10px;">
+                </div>
+
+                <div class="form-group">
+                    <label for="projectBackground">项目背景 <span style="color: #999; font-weight: normal; font-size: 0.9em;">(选填)</span></label>
+                    <textarea id="projectBackground" placeholder="请输入项目背景信息，如：污水来源、处理规模、特殊要求、环境条件等..." rows="3" style="font-size: 16px; resize: vertical; min-height: 80px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="waterType">污水类型</label>
+                    <select id="waterType">
+                        <option value="">请选择污水类型</option>
+                        <option value="生活污水">生活污水</option>
+                        <option value="医疗废水">医疗废水</option>
+                        <option value="高速服务区废水">高速服务区废水</option>
+                        <option value="养殖废水">养殖废水</option>
+                        <option value="垃圾渗滤液废水">垃圾渗滤液废水</option>
+                        <option value="大吨位膜池">大吨位膜池</option>
+                    </select>
+                    
+                    <div id="waterTypeParameters" class="parameters-section">
+                        <h4>💧 污水水质指标 (mg/L)</h4>
+                        <div class="parameter-row">
+                            <label>COD (化学需氧量):</label>
+                            <input type="number" id="cod" placeholder="400" step="1">
+                        </div>
+                        <div class="parameter-row">
+                            <label>BOD₅ (生化需氧量):</label>
+                            <input type="number" id="bod" placeholder="200" step="1">
+                        </div>
+                        <div class="parameter-row">
+                            <label>NH₃-N (氨氮):</label>
+                            <input type="number" id="nh3n" placeholder="35" step="0.1">
+                        </div>
+                        <div class="parameter-row">
+                            <label>TP (总磷):</label>
+                            <input type="number" id="tp" placeholder="4" step="0.1">
+                        </div>
+                        <div class="parameter-row">
+                            <label>SS (悬浮物):</label>
+                            <input type="number" id="ss" placeholder="220" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="capacity">处理量 (吨/天)</label>
+                    <select id="capacity">
+                        <option value="">请先选择污水类型</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="waterTemp">水温 (°C)</label>
+                    <input type="number" id="waterTemp" placeholder="请先选择省市..." min="-10" max="60" step="0.1">
+                    <div id="tempSuggestion" style="margin-top: 8px; padding: 8px; background: #f0f7ff; border-radius: 5px; font-size: 0.9em; color: #1e4a78; display: none;">
+                        <span id="tempSuggestionText"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="effluentStandard">出水水质要求</label>
+                    <select id="effluentStandard">
+                        <option value="">请选择出水标准</option>
+                        <option value="国标一级A">国标一级A</option>
+                        <option value="国标一级B">国标一级B</option>
+                        <option value="类地表四类">类地表四类</option>
+                    </select>
+                    
+                    <div id="effluentParameters" class="parameters-section">
+                        <h4>🎯 出水水质指标 (mg/L)</h4>
+                        <div class="parameter-row">
+                            <label>COD:</label>
+                            <input type="number" id="outCod" placeholder="50" step="1">
+                        </div>
+                        <div class="parameter-row">
+                            <label>BOD₅:</label>
+                            <input type="number" id="outBod" placeholder="10" step="1">
+                        </div>
+                        <div class="parameter-row">
+                            <label>NH₃-N:</label>
+                            <input type="number" id="outNh3n" placeholder="5" step="0.1">
+                        </div>
+                        <div class="parameter-row">
+                            <label>TP:</label>
+                            <input type="number" id="outTp" placeholder="0.5" step="0.01">
+                        </div>
+                        <div class="parameter-row">
+                            <label>SS:</label>
+                            <input type="number" id="outSs" placeholder="10" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-calculate" onclick="calculateSelection()">
+                    <span style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        🔍 开始选型计算
+                    </span>
+                </button>
             </div>
-            <div class="invokeBox">
-                <button id="openUrl">open_url_browser</button>
-                <button id="openUrlNew">open_url_new</button>
-                <button id="runCommand">run_command</button>
-                <button id="downloadFile">download_file</button>
-                <button id="getExeDir">get_exe_dir</button>
-                <button id="getEnvVar">get_env_var</button>
-                <button id="findPort">find_port</button>
+
+            <div class="result-panel">
+                <div id="noResult" class="no-result">
+                    <h3>💡 选型结果将在这里显示</h3>
+                    <p>请先填写左侧参数并点击"开始选型计算"</p>
+                </div>
+
+                <div id="resultContainer" class="result-container">
+                    <div class="result-header">
+                        <h2>✅ 选型结果</h2>
+                        <p id="resultSummary"></p>
+                    </div>
+                    
+                    <div id="resultContent"></div>
+                </div>
             </div>
-        </main>
-    </body>
+        </div>
+    </div>
+
+    <script>
+        // 产品详细信息数据库
+        const productDetails = {
+            "生活污水": {
+                processingRange: "10-1000吨/天",
+                mainProcess: "A²/O+MBR膜生物反应器",
+                processDescription: "缺氧/厌氧/好氧+膜分离"
+            },
+            "医疗废水": {
+                processingRange: "300-500吨/天", 
+                mainProcess: "强化预处理+A²/O+MBR+消毒",
+                processDescription: "病原体灭活+生化处理+膜分离+深度消毒"
+            },
+            "高速服务区废水": {
+                processingRange: "300-500吨/天",
+                mainProcess: "调节+A²/O+MBR+回用",
+                processDescription: "水质均化+生化处理+膜分离+回用系统"
+            },
+            "养殖废水": {
+                processingRange: "50-100吨/天",
+                mainProcess: "预处理+强化脱氮+MBR",
+                processDescription: "固液分离+延时曝气+膜生物反应器"
+            },
+            "垃圾渗滤液废水": {
+                processingRange: "20-30吨/天",
+                mainProcess: "预处理+两级A/O+MBR+NF",
+                processDescription: "调质+多级生化+膜分离+纳滤深度处理"
+            },
+            "大吨位膜池": {
+                processingRange: "2000-10000吨/天",
+                mainProcess: "模块化MBR膜池系统",
+                processDescription: "大规模膜生物反应器+智能控制系统"
+            }
+        };
+
+        // 产品编码映射表
+        const productCoding = {
+            "生活污水": {
+                10: "CWT-LS-0010-02",
+                20: "CWT-LS-0020-02", 
+                30: "CWT-LS-0030-02",
+                50: "CWT-LS-0050-02",
+                100: "CWT-LS-0100-02",
+                200: "CWT-LS-0200-02",
+                300: "CWT-LS-0300-02",
+                500: "CWT-LS-0500-02",
+                1000: "CWT-LS-1000-02"
+            },
+            "医疗废水": {
+                300: "CWT-MW-0300-02",
+                500: "CWT-MW-0500-02"
+            },
+            "高速服务区废水": {
+                300: "CWT-HS-0300-02",
+                500: "CWT-HS-0500-02"
+            },
+            "养殖废水": {
+                50: "CWT-AW-0050-02",
+                100: "CWT-AW-0100-02"
+            },
+            "垃圾渗滤液废水": {
+                20: "CWT-LW-0020-02",
+                30: "CWT-LW-0030-02"
+            },
+            "大吨位膜池": {
+                2000: "CWT-LM-2000-02",
+                3000: "CWT-LM-3000-02",
+                5000: "CWT-LM-5000-02",
+                8000: "CWT-LM-8000-02",
+                10000: "CWT-LM-10000-02"
+            }
+        };
+
+        // 增强的设备数据库，包含新增参数
+        const equipmentData = {
+            "生活污水": {
+                capacities: [10, 20, 30, 50, 100, 200, 300, 500, 1000],
+                specs: {
+                    "MBR单元": ["/", "/", "/", "/", "/", "1*20HQ", "1*20HQ", "1*20HQ", "1*40HQ"],
+                    "生化单元": ["2.43*1.3*2.3", "3.0*1.5*2.3", "3.5*2.0*2.3", "1*20HQ", "1*30HQ", "缺氧+好氧1*40HQ", "缺氧1*20HQ+好氧1*40HQ", "缺氧1*40HQ+好氧1*40HQ+1*20HQ", "缺氧2*40HQ+好氧3*40HQ"],
+                    "平均通量（LMH)": [8.8, 10.6, 11.4, 12.9, 17, 17, 17.9, 17.5, 17.5],
+                    "停留时间（h)": [10, 7.87, 8.21, 7.45, "7.32（生化）", "7.8（生化）", "7.64（生化）", "7.7（生化）", "7.8（生化）"],
+                    "膜面积（m²）": [47, 79, 110, 163, 245, 491, 702, 1193, 2386],
+                    "装机功率（kW）": [3.5, 5.2, 7.8, 12.5, 18.5, 35.2, 52.8, 88.5, 156.8],
+                    "占地面积（m²）": [8, 12, 16, 22, 35, 65, 85, 125, 220],
+                    "设备重量（t）": [2.8, 4.2, 5.6, 8.5, 12.8, 24.5, 35.2, 58.8, 98.5],
+                    "运行重量（t）": [8.5, 12.8, 17.2, 25.6, 38.5, 73.5, 105.6, 176.4, 295.5],
+                    "运行功率（kW）": [2.8, 4.2, 6.2, 10.0, 14.8, 28.2, 42.2, 70.8, 125.4]
+                }
+            },
+            "医疗废水": {
+                capacities: [300, 500],
+                specs: {
+                    "MBR单元": ["1*20HQ", "1*20HQ"],
+                    "生化单元": ["1*40HQ", "1*40HQ+1*20HQ"],
+                    "平均通量（LMH)": [17.9, 17.5],
+                    "停留时间（h)": [5.2, 4.58],
+                    "膜面积（m²）": [702, 1193],
+                    "装机功率（kW）": [68.5, 112.8],
+                    "占地面积（m²）": [95, 145],
+                    "设备重量（t）": [42.5, 68.8],
+                    "运行重量（t）": [127.5, 206.4],
+                    "运行功率（kW）": [54.8, 90.2]
+                }
+            },
+            "高速服务区废水": {
+                capacities: [300, 500],
+                specs: {
+                    "MBR单元": ["1*20HQ", "1*20HQ"],
+                    "生化单元": ["1*40HQ+1*20HQ", "3*40HQ"],
+                    "平均通量（LMH)": [17.9, 17.5],
+                    "停留时间（h)": [7.64, 9.36],
+                    "膜面积（m²）": [702, 1193],
+                    "装机功率（kW）": [65.2, 125.6],
+                    "占地面积（m²）": [105, 185],
+                    "设备重量（t）": [45.8, 85.2],
+                    "运行重量（t）": [137.4, 255.6],
+                    "运行功率（kW）": [52.2, 100.5]
+                }
+            },
+            "养殖废水": {
+                capacities: [50, 100],
+                specs: {
+                    "MBR单元": ["1*20HQ", "1*20HQ"],
+                    "生化单元": ["5*40HQ", "10*40HQ"],
+                    "平均通量（LMH)": [12.9, 13.2],
+                    "停留时间（h)": [156, 156],
+                    "膜面积（m²）": [163, 318],
+                    "装机功率（kW）": [85.5, 165.8],
+                    "占地面积（m²）": [245, 485],
+                    "设备重量（t）": [125.8, 245.6],
+                    "运行重量（t）": [377.4, 736.8],
+                    "运行功率（kW）": [68.4, 132.6]
+                }
+            },
+            "垃圾渗滤液废水": {
+                capacities: [20, 30],
+                specs: {
+                    "MBR单元": ["/", "/"],
+                    "生化单元": ["3*40HQ+1*20HQ", "5*40HQ+1*20HQ"],
+                    "平均通量（LMH)": [4.76, 5.1],
+                    "停留时间（h)": [234, 260],
+                    "膜面积（m²）": [175, 245],
+                    "装机功率（kW）": [125.8, 185.6],
+                    "占地面积（m²）": [185, 265],
+                    "设备重量（t）": [185.6, 265.8],
+                    "运行重量（t）": [556.8, 797.4],
+                    "运行功率（kW）": [100.6, 148.5]
+                }
+            },
+            "大吨位膜池": {
+                capacities: [2000, 3000, 5000, 8000, 10000],
+                specs: {
+                    "MBR单元": ["2*40HQ", "3*40HQ", "5*40HQ", "8*40HQ", "10*40HQ"],
+                    "生化单元": ["/", "/", "/", "/", "/"],
+                    "组器数量（台）": [4, 6, 10, 16, 20],
+                    "平均通量（LMH)": [17.5, 17.5, 17.5, 17.5, 17.5],
+                    "膜面积（m²）": [4772, 7158, 11930, 19088, 23860],
+                    "装机功率（kW）": [285.6, 425.8, 685.2, 1125.8, 1385.6],
+                    "占地面积（m²）": [385, 565, 885, 1385, 1685],
+                    "设备重量（t）": [125.8, 185.6, 295.8, 465.2, 585.6],
+                    "运行重量（t）": [377.4, 556.8, 887.4, 1395.6, 1756.8],
+                    "运行功率（kW）": [228.5, 340.6, 548.2, 900.6, 1108.5]
+                }
+            }
+        };
+
+        // 根据省市推荐水温的数据库
+        const provinceTemperature = {
+            "北京市": { summer: 25, winter: 8, avg: 16 },
+            "天津市": { summer: 26, winter: 7, avg: 16 },
+            "上海市": { summer: 28, winter: 12, avg: 20 },
+            "重庆市": { summer: 30, winter: 15, avg: 22 },
+            "河北省": { summer: 25, winter: 5, avg: 15 },
+            "山西省": { summer: 24, winter: 3, avg: 13 },
+            "辽宁省": { summer: 24, winter: -5, avg: 10 },
+            "吉林省": { summer: 23, winter: -10, avg: 7 },
+            "黑龙江省": { summer: 22, winter: -15, avg: 4 },
+            "江苏省": { summer: 28, winter: 10, avg: 19 },
+            "浙江省": { summer: 29, winter: 12, avg: 20 },
+            "安徽省": { summer: 27, winter: 8, avg: 17 },
+            "福建省": { summer: 30, winter: 16, avg: 23 },
+            "江西省": { summer: 29, winter: 12, avg: 20 },
+            "山东省": { summer: 27, winter: 6, avg: 16 },
+            "河南省": { summer: 28, winter: 7, avg: 17 },
+            "湖北省": { summer: 29, winter: 10, avg: 19 },
+            "湖南省": { summer: 30, winter: 12, avg: 21 },
+            "广东省": { summer: 32, winter: 18, avg: 25 },
+            "海南省": { summer: 33, winter: 22, avg: 27 },
+            "四川省": { summer: 26, winter: 8, avg: 17 },
+            "贵州省": { summer: 25, winter: 8, avg: 16 },
+            "云南省": { summer: 24, winter: 12, avg: 18 },
+            "陕西省": { summer: 26, winter: 5, avg: 15 },
+            "甘肃省": { summer: 22, winter: -2, avg: 10 },
+            "青海省": { summer: 18, winter: -8, avg: 5 },
+            "台湾省": { summer: 32, winter: 20, avg: 26 },
+            "内蒙古自治区": { summer: 22, winter: -12, avg: 5 },
+            "广西壮族自治区": { summer: 32, winter: 16, avg: 24 },
+            "西藏自治区": { summer: 20, winter: -5, avg: 7 },
+            "宁夏回族自治区": { summer: 24, winter: 0, avg: 12 },
+            "新疆维吾尔自治区": { summer: 25, winter: -8, avg: 8 },
+            "香港特别行政区": { summer: 31, winter: 19, avg: 25 },
+            "澳门特别行政区": { summer: 31, winter: 18, avg: 24 },
+            "海外地区": { summer: 25, winter: 10, avg: 18 }
+        };
+
+        // 省市选择改变时更新水温建议
+        function updateTemperatureSuggestion() {
+            const province = document.getElementById('projectProvince');
+            const waterTempInput = document.getElementById('waterTemp');
+            const tempSuggestion = document.getElementById('tempSuggestion');
+            const tempSuggestionText = document.getElementById('tempSuggestionText');
+            
+            if (!province || !waterTempInput || !tempSuggestion || !tempSuggestionText) {
+                console.log('温度建议元素未找到');
+                return;
+            }
+            
+            const provinceValue = province.value;
+            
+            if (provinceValue && provinceTemperature[provinceValue]) {
+                const temp = provinceTemperature[provinceValue];
+                
+                tempSuggestion.style.display = 'block';
+                tempSuggestionText.innerHTML = `
+                    🌡️ <strong>${provinceValue}</strong> 建议水温：
+                    夏季 ${temp.summer}°C，冬季 ${temp.winter}°C，年均 ${temp.avg}°C
+                `;
+                
+                waterTempInput.value = temp.avg;
+                waterTempInput.placeholder = `建议: ${temp.avg}°C (年均温度)`;
+                
+            } else {
+                tempSuggestion.style.display = 'none';
+                waterTempInput.value = '';
+                waterTempInput.placeholder = '请先选择省市...';
+            }
+        }
+
+        const waterTypeDefaults = {
+            "生活污水": { cod: 400, bod: 200, nh3n: 35, tp: 4, ss: 220 },
+            "医疗废水": { cod: 300, bod: 150, nh3n: 25, tp: 3, ss: 200 },
+            "高速服务区废水": { cod: 350, bod: 180, nh3n: 30, tp: 3.5, ss: 180 },
+            "养殖废水": { cod: 2000, bod: 800, nh3n: 200, tp: 15, ss: 500 },
+            "垃圾渗滤液废水": { cod: 15000, bod: 3000, nh3n: 1000, tp: 50, ss: 2000 },
+            "大吨位膜池": { cod: 400, bod: 200, nh3n: 35, tp: 4, ss: 220 }
+        };
+
+        // 出水标准预设值
+        const effluentDefaults = {
+            "国标一级A": { cod: 50, bod: 10, nh3n: 5, tp: 0.5, ss: 10 },
+            "国标一级B": { cod: 60, bod: 20, nh3n: 8, tp: 1, ss: 20 },
+            "类地表四类": { cod: 30, bod: 6, nh3n: 1.5, tp: 0.3, ss: 10 }
+        };
+
+        // 污水类型改变时的处理
+        function updateWaterTypeParameters() {
+            const waterTypeElement = document.getElementById('waterType');
+            const parametersSection = document.getElementById('waterTypeParameters');
+            
+            if (!waterTypeElement || !parametersSection) {
+                console.log('水质参数元素未找到');
+                return;
+            }
+            
+            const waterType = waterTypeElement.value;
+            
+            if (waterType && waterTypeDefaults[waterType]) {
+                parametersSection.style.display = 'block';
+                const defaults = waterTypeDefaults[waterType];
+                
+                const codInput = document.getElementById('cod');
+                const bodInput = document.getElementById('bod');
+                const nh3nInput = document.getElementById('nh3n');
+                const tpInput = document.getElementById('tp');
+                const ssInput = document.getElementById('ss');
+                
+                if (codInput) codInput.placeholder = defaults.cod;
+                if (bodInput) bodInput.placeholder = defaults.bod;
+                if (nh3nInput) nh3nInput.placeholder = defaults.nh3n;
+                if (tpInput) tpInput.placeholder = defaults.tp;
+                if (ssInput) ssInput.placeholder = defaults.ss;
+            } else {
+                parametersSection.style.display = 'none';
+            }
+            
+            updateCapacityOptions();
+        }
+
+        // 出水标准改变时的处理
+        function updateEffluentParameters() {
+            const effluentStandardElement = document.getElementById('effluentStandard');
+            const parametersSection = document.getElementById('effluentParameters');
+            
+            if (!effluentStandardElement || !parametersSection) {
+                console.log('出水参数元素未找到');
+                return;
+            }
+            
+            const effluentStandard = effluentStandardElement.value;
+            
+            if (effluentStandard && effluentDefaults[effluentStandard]) {
+                parametersSection.style.display = 'block';
+                const defaults = effluentDefaults[effluentStandard];
+                
+                const outCodInput = document.getElementById('outCod');
+                const outBodInput = document.getElementById('outBod');
+                const outNh3nInput = document.getElementById('outNh3n');
+                const outTpInput = document.getElementById('outTp');
+                const outSsInput = document.getElementById('outSs');
+                
+                if (outCodInput) outCodInput.placeholder = defaults.cod;
+                if (outBodInput) outBodInput.placeholder = defaults.bod;
+                if (outNh3nInput) outNh3nInput.placeholder = defaults.nh3n;
+                if (outTpInput) outTpInput.placeholder = defaults.tp;
+                if (outSsInput) outSsInput.placeholder = defaults.ss;
+            } else {
+                parametersSection.style.display = 'none';
+            }
+        }
+
+        // 更新处理量选项
+        function updateCapacityOptions() {
+            const waterTypeElement = document.getElementById('waterType');
+            const capacitySelect = document.getElementById('capacity');
+            
+            if (!waterTypeElement || !capacitySelect) {
+                console.log('处理量选项元素未找到');
+                return;
+            }
+            
+            const waterType = waterTypeElement.value;
+            capacitySelect.innerHTML = '<option value="">请选择处理量</option>';
+            
+            if (waterType && equipmentData[waterType]) {
+                const capacities = equipmentData[waterType].capacities;
+                capacities.forEach(capacity => {
+                    const option = document.createElement('option');
+                    option.value = capacity;
+                    option.textContent = `${capacity} 吨/天`;
+                    capacitySelect.appendChild(option);
+                });
+            }
+        }
+
+        // 添加事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('projectProvince').addEventListener('change', function() {
+                updateTemperatureSuggestion();
+            });
+            document.getElementById('waterType').addEventListener('change', updateWaterTypeParameters);
+            document.getElementById('effluentStandard').addEventListener('change', updateEffluentParameters);
+        });
+
+        function findBestMatch(waterType, targetCapacity) {
+            const data = equipmentData[waterType];
+            if (!data) return null;
+
+            const index = data.capacities.indexOf(parseInt(targetCapacity));
+            if (index === -1) return null;
+
+            const productCode = productCoding[waterType] && productCoding[waterType][parseInt(targetCapacity)] 
+                ? productCoding[waterType][parseInt(targetCapacity)] 
+                : "CWT-XXXX-XXXX-XX";
+
+            const productInfo = productDetails[waterType] || {
+                processingRange: "N/A",
+                mainProcess: "标准MBR工艺",
+                processDescription: "膜生物反应器处理工艺"
+            };
+
+            return {
+                capacity: data.capacities[index],
+                index: index,
+                specs: data.specs,
+                productCode: productCode,
+                productInfo: productInfo
+            };
+        }
+
+        function calculateSelection() {
+            const projectProvince = document.getElementById('projectProvince').value;
+            const projectAddress = document.getElementById('projectAddress').value;
+            const projectBackground = document.getElementById('projectBackground').value;
+            const waterType = document.getElementById('waterType').value;
+            const capacity = document.getElementById('capacity').value;
+            const waterTemp = document.getElementById('waterTemp').value;
+            const effluentStandard = document.getElementById('effluentStandard').value;
+
+            // 验证必要输入项
+            if (!projectProvince) {
+                alert('请选择项目省市！');
+                return;
+            }
+            if (!projectAddress.trim()) {
+                alert('请输入详细地址！');
+                return;
+            }
+            if (!waterType) {
+                alert('请选择污水类型！');
+                return;
+            }
+            if (!capacity) {
+                alert('请选择处理量！');
+                return;
+            }
+            if (!waterTemp) {
+                alert('请确认水温！');
+                return;
+            }
+            if (!effluentStandard) {
+                alert('请选择出水水质要求！');
+                return;
+            }
+
+            const result = findBestMatch(waterType, capacity);
+            
+            if (!result) {
+                alert('未找到匹配的设备配置！');
+                return;
+            }
+
+            const fullLocation = `${projectProvince} ${projectAddress}`;
+            displayResult(fullLocation, waterType, capacity, result, effluentStandard, waterTemp, projectBackground);
+        }
+
+        // 下载方案文件函数
+        function downloadScheme(productCode, waterType, capacity) {
+            // 模拟下载方案文件
+            const filename = `${productCode}_技术方案.pdf`;
+            
+            // 创建一个虚拟的下载链接
+            const link = document.createElement('a');
+            link.href = '#'; // 在实际应用中，这里应该是实际的文件URL
+            link.download = filename;
+            
+            // 显示下载提示
+            alert(`正在准备下载技术方案：${filename}\n\n包含内容：\n• 工艺流程图\n• 技术参数表\n• 设备清单\n• 运行说明\n• 维护指南`);
+            
+            // 在实际应用中，这里会触发真实的文件下载
+            console.log(`下载方案文件: ${filename}`);
+        }
+
+        // 下载图纸文件函数
+        function downloadDrawings(productCode, waterType, capacity) {
+            // 模拟下载图纸文件
+            const filename = `${productCode}_设备图纸.zip`;
+            
+            // 创建一个虚拟的下载链接
+            const link = document.createElement('a');
+            link.href = '#'; // 在实际应用中，这里应该是实际的文件URL
+            link.download = filename;
+            
+            // 显示下载提示
+            alert(`正在准备下载设备图纸：${filename}\n\n包含图纸：\n• 设备总装图\n• 设备管口图\n• 设备基础图\n• 电气控制图\n• 安装示意图`);
+            
+            // 在实际应用中，这里会触发真实的文件下载
+            console.log(`下载图纸文件: ${filename}`);
+        }
+
+        function displayResult(projectLocation, waterType, inputCapacity, result, effluentStandard, waterTemp, projectBackground) {
+            const noResult = document.getElementById('noResult');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultSummary = document.getElementById('resultSummary');
+            const resultContent = document.getElementById('resultContent');
+            const resultPanel = document.querySelector('.result-panel');
+            const inputPanel = document.querySelector('.input-panel');
+
+            noResult.style.display = 'none';
+            resultContainer.classList.add('show');
+
+            // 获取左侧面板高度，并设置右侧面板相同高度
+            setTimeout(() => {
+                const leftPanelHeight = inputPanel.offsetHeight;
+                resultPanel.style.maxHeight = leftPanelHeight + 'px';
+                resultPanel.classList.add('match-left-height');
+            }, 100);
+
+            noResult.style.display = 'none';
+            resultContainer.classList.add('show');
+
+            // 设置结果摘要
+            resultSummary.innerHTML = `
+                <div style="font-size: 1.1em; margin-bottom: 8px;">
+                    <strong>推荐型号：${result.productCode}</strong>
+                </div>
+                <div style="font-size: 0.95em; opacity: 0.9;">
+                    ${projectLocation} - ${waterType} - ${result.capacity}吨/天 - ${effluentStandard} - 水温${waterTemp}°C
+                </div>
+            `;
+
+            // 生成详细结果
+            let content = '';
+
+            // 如果有项目背景，则首先显示
+            if (projectBackground && projectBackground.trim()) {
+                content += `
+                    <div class="result-item">
+                        <h3>📋 项目背景</h3>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #6c757d;">
+                            <p style="margin: 0; color: #495057; line-height: 1.6; white-space: pre-wrap;">${projectBackground.trim()}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            content += `
+                <div class="result-item">
+                    <h3>🏷️ 推荐设备型号</h3>
+                    <div style="background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%); color: #1e4a78; padding: 25px; border-radius: 10px; margin-bottom: 15px; border: 2px solid #2563aa;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <h2 style="margin: 0; font-size: 2.2em; font-weight: bold; color: #1e4a78;">
+                                ${result.productCode}
+                            </h2>
+                            <p style="margin: 8px 0 0 0; font-size: 1.1em; color: #2563aa;">
+                                ${waterType}处理设备 - ${result.capacity}吨/天
+                            </p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                            <div style="background: rgba(37, 99, 170, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(37, 99, 170, 0.2);">
+                                <h4 style="margin: 0 0 8px 0; font-size: 1em; color: #1e4a78;">📏 处理量</h4>
+                                <p style="margin: 0; font-size: 1.1em; font-weight: 600; color: #2563aa;">${result.capacity}吨/天</p>
+                            </div>
+                            <div style="background: rgba(37, 99, 170, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(37, 99, 170, 0.2);">
+                                <h4 style="margin: 0 0 8px 0; font-size: 1em; color: #1e4a78;">⚙️ 主体工艺</h4>
+                                <p style="margin: 0; font-size: 1.1em; font-weight: 600; color: #2563aa;">${result.productInfo.mainProcess}</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(37, 99, 170, 0.1); border-radius: 8px; border: 1px solid rgba(37, 99, 170, 0.2);">
+                            <h4 style="margin: 0 0 8px 0; font-size: 1em; color: #1e4a78;">🔬 工艺特点</h4>
+                            <p style="margin: 0; font-size: 1em; line-height: 1.4; color: #333;">${result.productInfo.processDescription}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-item">
+                    <h3>📊 核心技术参数</h3>
+                    <table class="spec-table">
+                        <thead>
+                            <tr>
+                                <th>技术参数</th>
+                                <th>数值</th>
+                                <th>单位</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>设计处理量</strong></td>
+                                <td>${result.capacity}</td>
+                                <td>吨/天</td>
+                            </tr>
+                            <tr>
+                                <td><strong>膜通量</strong></td>
+                                <td>${result.specs["平均通量（LMH)"] ? result.specs["平均通量（LMH)"][result.index] : 'N/A'}</td>
+                                <td>L/(m²·h)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>膜面积</strong></td>
+                                <td>${result.specs["膜面积（m²）"] ? result.specs["膜面积（m²）"][result.index] : 'N/A'}</td>
+                                <td>m²</td>
+                            </tr>
+                            <tr>
+                                <td><strong>装机功率</strong></td>
+                                <td>${result.specs["装机功率（kW）"] ? result.specs["装机功率（kW）"][result.index] : 'N/A'}</td>
+                                <td>kW</td>
+                            </tr>
+                            <tr>
+                                <td><strong>运行功率</strong></td>
+                                <td>${result.specs["运行功率（kW）"] ? result.specs["运行功率（kW）"][result.index] : 'N/A'}</td>
+                                <td>kW</td>
+                            </tr>
+                            <tr>
+                                <td><strong>占地面积</strong></td>
+                                <td>${result.specs["占地面积（m²）"] ? result.specs["占地面积（m²）"][result.index] : 'N/A'}</td>
+                                <td>m²</td>
+                            </tr>
+                            <tr>
+                                <td><strong>设备重量</strong></td>
+                                <td>${result.specs["设备重量（t）"] ? result.specs["设备重量（t）"][result.index] : 'N/A'}</td>
+                                <td>t</td>
+                            </tr>
+                            <tr>
+                                <td><strong>运行重量</strong></td>
+                                <td>${result.specs["运行重量（t）"] ? result.specs["运行重量（t）"][result.index] : 'N/A'}</td>
+                                <td>t</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="result-item">
+                    <h3>📦 设备外形尺寸</h3>
+                    ${getEquipmentDimensions(result.specs, result.index)}
+                </div>
+
+                <div class="result-item">
+                    <h3>💧 水质参数分析</h3>
+                    ${getWaterQualityAnalysis(waterType, effluentStandard)}
+                </div>
+
+                <div class="result-item">
+                    <h3>🌡️ 温度影响分析</h3>
+                    ${getTemperatureAnalysis(waterTemp)}
+                </div>
+
+                <div class="result-item">
+                    <h3>💡 综合分析</h3>
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="color: #2c3e50; margin-bottom: 8px;">设备特点</h4>
+                        ${getEquipmentDescription(waterType, result)}
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: #2c3e50; margin-bottom: 8px;">项目地点分析</h4>
+                        ${getProjectLocationAnalysis(projectLocation)}
+                    </div>
+                    
+                    <!-- 下载按钮区域 -->
+                    <div class="download-buttons">
+                        <button class="download-btn scheme" onclick="downloadScheme('${result.productCode}', '${waterType}', ${result.capacity})">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14,2 14,8 20,8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10,9 9,9 8,9"/>
+                            </svg>
+                            下载技术方案
+                        </button>
+                        <button class="download-btn drawing" onclick="downloadDrawings('${result.productCode}', '${waterType}', ${result.capacity})">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21,15 16,10 5,21"/>
+                            </svg>
+                            下载设备图纸
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            resultContent.innerHTML = content;
+        }
+
+        function getTemperatureAnalysis(temp) {
+            const temperature = parseFloat(temp);
+            let analysis = '';
+            
+            if (temperature < 5) {
+                analysis = `
+                    <div style="background: #fff3cd; padding: 10px; border-radius: 6px; border-left: 3px solid #ffc107;">
+                        <p style="margin: 0; font-size: 0.9em;"><strong>⚠️ 低温环境：</strong>需保温措施、防冻保护，延长停留时间</p>
+                    </div>
+                `;
+            } else if (temperature >= 5 && temperature <= 15) {
+                analysis = `
+                    <div style="background: #e7f3ff; padding: 10px; border-radius: 6px; border-left: 3px solid #0dcaf0;">
+                        <p style="margin: 0; font-size: 0.9em;"><strong>🌡️ 适中偏低：</strong>适当延长停留时间，增加曝气量</p>
+                    </div>
+                `;
+            } else if (temperature > 15 && temperature <= 35) {
+                analysis = `
+                    <div style="background: #d1e7dd; padding: 10px; border-radius: 6px; border-left: 3px solid #198754;">
+                        <p style="margin: 0; font-size: 0.9em;"><strong>✅ 最适温度：</strong>微生物活性最佳，系统运行稳定</p>
+                    </div>
+                `;
+            } else {
+                analysis = `
+                    <div style="background: #f8d7da; padding: 10px; border-radius: 6px; border-left: 3px solid #dc3545;">
+                        <p style="margin: 0; font-size: 0.9em;"><strong>🔥 高温环境：</strong>需散热措施，使用耐高温材料</p>
+                    </div>
+                `;
+            }
+            
+            return analysis;
+        }
+
+        function getWaterQualityAnalysis(waterType, effluentStandard) {
+            const influent = waterTypeDefaults[waterType] || {};
+            const effluent = effluentDefaults[effluentStandard] || {};
+            
+            // 获取用户输入的实际值
+            const actualInfluent = {
+                cod: parseFloat(document.getElementById('cod').value) || influent.cod || 0,
+                bod: parseFloat(document.getElementById('bod').value) || influent.bod || 0,
+                nh3n: parseFloat(document.getElementById('nh3n').value) || influent.nh3n || 0,
+                tp: parseFloat(document.getElementById('tp').value) || influent.tp || 0,
+                ss: parseFloat(document.getElementById('ss').value) || influent.ss || 0
+            };
+            
+            const actualEffluent = {
+                cod: parseFloat(document.getElementById('outCod').value) || effluent.cod || 0,
+                bod: parseFloat(document.getElementById('outBod').value) || effluent.bod || 0,
+                nh3n: parseFloat(document.getElementById('outNh3n').value) || effluent.nh3n || 0,
+                tp: parseFloat(document.getElementById('outTp').value) || effluent.tp || 0,
+                ss: parseFloat(document.getElementById('outSs').value) || effluent.ss || 0
+            };
+            
+            // 计算去除率和判断是否合格
+            const parameters = ['cod', 'bod', 'nh3n', 'tp', 'ss'];
+            const parameterNames = {
+                cod: 'COD',
+                bod: 'BOD₅', 
+                nh3n: 'NH₃-N',
+                tp: 'TP',
+                ss: 'SS'
+            };
+            
+            let removalRates = {};
+            let complianceStatus = {};
+            let failedParameters = [];
+            
+            parameters.forEach(param => {
+                // 计算去除率
+                if (actualInfluent[param] > 0) {
+                    const calculatedRemoval = ((actualInfluent[param] - actualEffluent[param]) / actualInfluent[param] * 100);
+                    removalRates[param] = Math.max(0, Math.min(100, calculatedRemoval)).toFixed(1);
+                    
+                    // 判断合规性 - 更合理的判定标准
+                    if (actualInfluent[param] <= actualEffluent[param]) {
+                        // 出水浓度高于进水浓度，明显异常
+                        complianceStatus[param] = false;
+                        failedParameters.push(`${parameterNames[param]}(出水>进水)`);
+                    } else if (calculatedRemoval < 0) {
+                        // 负去除率，异常
+                        complianceStatus[param] = false;
+                        failedParameters.push(`${parameterNames[param]}(负去除率)`);
+                    } else if (calculatedRemoval > 99.9) {
+                        // 去除率过高，不现实
+                        complianceStatus[param] = false;
+                        failedParameters.push(`${parameterNames[param]}(去除率过高)`);
+                    } else {
+                        // 根据不同指标判断去除率是否合理
+                        const reasonableRanges = {
+                            cod: { min: 85, max: 98 },      // COD合理去除率85-98%
+                            bod: { min: 90, max: 99 },      // BOD合理去除率90-99%
+                            nh3n: { min: 80, max: 98 },     // 氨氮合理去除率80-98%
+                            tp: { min: 70, max: 95 },       // 总磷合理去除率70-95%
+                            ss: { min: 90, max: 99 }        // SS合理去除率90-99%
+                        };
+                        
+                        const range = reasonableRanges[param];
+                        if (calculatedRemoval < range.min) {
+                            complianceStatus[param] = false;
+                            failedParameters.push(`${parameterNames[param]}(去除率偏低)`);
+                        } else if (calculatedRemoval > range.max) {
+                            complianceStatus[param] = false;  
+                            failedParameters.push(`${parameterNames[param]}(去除率偏高)`);
+                        } else {
+                            complianceStatus[param] = true;
+                        }
+                    }
+                } else {
+                    removalRates[param] = 'N/A';
+                    complianceStatus[param] = true; // 进水为0时不判定异常
+                }
+            });
+            
+            let analysis = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">';
+            
+            // 进水水质
+            analysis += `
+                <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db;">
+                    <h4 style="margin-bottom: 10px; color: #3498db;">📥 进水水质 (mg/L)</h4>
+                    <p><strong>COD:</strong> ${actualInfluent.cod}</p>
+                    <p><strong>BOD₅:</strong> ${actualInfluent.bod}</p>
+                    <p><strong>NH₃-N:</strong> ${actualInfluent.nh3n}</p>
+                    <p><strong>TP:</strong> ${actualInfluent.tp}</p>
+                    <p><strong>SS:</strong> ${actualInfluent.ss}</p>
+                </div>
+            `;
+            
+            // 出水水质
+            analysis += `
+                <div style="background: #d1e7dd; padding: 15px; border-radius: 8px; border-left: 4px solid #198754;">
+                    <h4 style="margin-bottom: 10px; color: #198754;">📤 出水水质 (mg/L)</h4>
+                    <p><strong>COD:</strong> ${actualEffluent.cod}</p>
+                    <p><strong>BOD₅:</strong> ${actualEffluent.bod}</p>
+                    <p><strong>NH₃-N:</strong> ${actualEffluent.nh3n}</p>
+                    <p><strong>TP:</strong> ${actualEffluent.tp}</p>
+                    <p><strong>SS:</strong> ${actualEffluent.ss}</p>
+                </div>
+            `;
+            
+            analysis += '</div>';
+            
+            // 去除率分析表
+            analysis += `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #2c3e50; margin-bottom: 10px;">📊 污染物去除率分析</h4>
+                    <table class="spec-table">
+                        <thead>
+                            <tr>
+                                <th>污染物指标</th>
+                                <th>进水浓度 (mg/L)</th>
+                                <th>出水浓度 (mg/L)</th>
+                                <th>去除率 (%)</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            parameters.forEach(param => {
+                const statusIcon = complianceStatus[param] ? '✅' : '❌';
+                const statusText = complianceStatus[param] ? '正常' : '异常';
+                const statusColor = complianceStatus[param] ? '#198754' : '#dc3545';
+                
+                analysis += `
+                    <tr style="background: ${complianceStatus[param] ? '#f8f9fa' : '#fff5f5'};">
+                        <td><strong>${parameterNames[param]}</strong></td>
+                        <td>${actualInfluent[param]}</td>
+                        <td>${actualEffluent[param]}</td>
+                        <td>${removalRates[param]}${removalRates[param] !== 'N/A' ? '%' : ''}</td>
+                        <td style="color: ${statusColor}; font-weight: bold;">${statusIcon} ${statusText}</td>
+                    </tr>
+                `;
+            });
+            
+            analysis += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // 合规性判断提醒
+            if (failedParameters.length > 0) {
+                analysis += `
+                    <div style="background: #f8d7da; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545; margin-bottom: 15px;">
+                        <h4 style="color: #dc3545; margin-bottom: 10px;">⚠️ 水质参数异常提醒</h4>
+                        <p style="margin: 0; color: #721c24;"><strong>异常指标：</strong>${failedParameters.join('、')}</p>
+                        <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #721c24;">
+                            检测到以上指标存在异常情况，请检查参数设置是否合理。常见问题包括：
+                            <br>• 出水浓度高于进水浓度
+                            <br>• 去除率超出工艺技术范围
+                            <br>• 建议重新确认进出水水质要求
+                        </p>
+                    </div>
+                `;
+            } else {
+                analysis += `
+                    <div style="background: #d1e7dd; padding: 15px; border-radius: 8px; border-left: 4px solid #198754;">
+                        <h4 style="color: #198754; margin-bottom: 10px;">✅ 水质参数验证通过</h4>
+                        <p style="margin: 0; color: #0f5132;">所有污染物指标的进出水浓度关系合理，去除率符合工艺技术范围，设备能够有效去除污染物。</p>
+                    </div>
+                `;
+            }
+            
+            return analysis;
+        }
+
+        function getEquipmentDescription(waterType, result) {
+            const descriptions = {
+                "生活污水": "一体化MBR膜生物反应器，占地小，出水稳定，适合城镇生活污水处理",
+                "医疗废水": "专门针对医疗废水设计，具备强化消毒功能，确保病原体彻底去除",
+                "高速服务区废水": "结构紧凑，适应空间限制，处理效率高，维护简便",
+                "养殖废水": "针对高氨氮、高有机物特点设计，停留时间长，确保充分降解",
+                "垃圾渗滤液废水": "多级处理工艺，应对复杂成分，去除率高，运行稳定",
+                "大吨位膜池": "大规模处理能力，模块化设计，便于扩展和维护"
+            };
+            return `<p style="margin: 0; color: #666;">${descriptions[waterType] || '专业污水处理设备，技术先进，运行可靠'}</p>`;
+        }
+
+        function getProjectLocationAnalysis(location) {
+            // 分析省市信息
+            const province = location.split(' ')[0];
+            let climateInfo = '';
+            let transportInfo = '';
+            
+            // 根据省市判断气候特点
+            if (['黑龙江省', '吉林省', '辽宁省', '内蒙古自治区', '新疆维吾尔自治区', '青海省', '西藏自治区'].includes(province)) {
+                climateInfo = '🌨️ 寒冷地区：需考虑防冻保温措施，选用耐低温材料';
+            } else if (['海南省', '广东省', '广西壮族自治区', '云南省', '福建省'].includes(province)) {
+                climateInfo = '🌴 温热地区：需考虑防腐蚀和散热措施，加强通风设计';
+            } else if (['新疆维吾尔自治区', '甘肃省', '宁夏回族自治区', '内蒙古自治区'].includes(province)) {
+                climateInfo = '🏜️ 干旱地区：需考虑风沙防护和水资源利用优化';
+            } else if (['四川省', '重庆市', '贵州省', '云南省', '西藏自治区'].includes(province)) {
+                climateInfo = '⛰️ 高原山区：需考虑海拔影响和运输条件限制';
+            } else {
+                climateInfo = '🌤️ 温带地区：气候条件适宜，设备运行环境良好';
+            }
+            
+            // 根据省市判断运输便利性
+            if (['北京市', '天津市', '上海市', '江苏省', '浙江省', '广东省', '山东省'].includes(province)) {
+                transportInfo = '🚛 交通便利：靠近港口或交通枢纽，运输成本较低';
+            } else if (['西藏自治区', '新疆维吾尔自治区', '青海省', '甘肃省'].includes(province)) {
+                transportInfo = '🚚 运输较难：地处偏远，需特殊运输方案和较高运费';
+            } else if (['海外地区'].includes(province)) {
+                transportInfo = '✈️ 国际运输：需要国际物流，考虑海运/空运及清关事宜';
+            } else {
+                transportInfo = '🚐 运输一般：陆路运输为主，成本适中';
+            }
+            
+            return `
+                <div style="background: #fff3cd; padding: 15px; border-radius: 6px; border-left: 3px solid #ffc107;">
+                    <p style="margin: 0 0 8px 0; font-size: 0.9em;"><strong>📍 项目地点：</strong>${location}</p>
+                    <p style="margin: 0 0 5px 0; font-size: 0.85em; color: #666;">${climateInfo}</p>
+                    <p style="margin: 0; font-size: 0.85em; color: #666;">${transportInfo}</p>
+                </div>
+            `;
+        }
+
+        function getEquipmentDimensions(specs, index) {
+            let dimensionInfo = '';
+            
+            const membraneEquipment = specs["MBR单元"] ? specs["MBR单元"][index] : '';
+            const biochemicalEquipment = specs["生化单元"] ? specs["生化单元"][index] : '';
+            
+            const containerDimensions = {
+                "20HQ": { length: "6.06m", width: "2.44m", height: "2.90m", volume: "37.4m³" },
+                "30HQ": { length: "9.12m", width: "2.44m", height: "2.90m", volume: "58.7m³" },
+                "40HQ": { length: "12.19m", width: "2.44m", height: "2.90m", volume: "76.3m³" }
+            };
+
+            // 判断是否为一体化设备
+            if (membraneEquipment === '/' || membraneEquipment === '' || !membraneEquipment) {
+                // 一体化设备
+                dimensionInfo += `
+                    <div style="background: #d1e7dd; padding: 20px; border-radius: 10px; border-left: 4px solid #198754; margin-bottom: 15px;">
+                        <h4 style="margin-bottom: 15px; color: #198754;">🏗️ 一体化设备</h4>
+                        <p style="margin-bottom: 10px; color: #495057;"><strong>设备类型：</strong>设备+生化+膜池一体化集成</p>
+                        <p style="margin-bottom: 15px; color: #666;">该设备未单独分模块，所有功能集成在生化单元内</p>
+                `;
+                
+                if (biochemicalEquipment && biochemicalEquipment !== '/') {
+                    dimensionInfo += `<p style="margin-bottom: 10px;"><strong>整体配置：</strong>${biochemicalEquipment}</p>`;
+                    
+                    // 检查是否为直接尺寸还是集装箱规格
+                    if (biochemicalEquipment.match(/^\d+(\.\d+)?\*\d+(\.\d+)?\*\d+(\.\d+)?$/)) {
+                        // 直接尺寸格式
+                        const dimensions = biochemicalEquipment.split('*');
+                        const volume = (parseFloat(dimensions[0]) * parseFloat(dimensions[1]) * parseFloat(dimensions[2])).toFixed(1);
+                        dimensionInfo += `
+                            <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border: 1px solid #c3e6cb;">
+                                <p><strong>外形尺寸:</strong></p>
+                                <p>长×宽×高: ${dimensions[0]}m × ${dimensions[1]}m × ${dimensions[2]}m</p>
+                            </div>
+                        `;
+                    } else {
+                        // 集装箱规格格式
+                        const containerMatches = biochemicalEquipment.match(/(\d+)\*(\d+HQ)/g);
+                        if (containerMatches) {
+                            containerMatches.forEach(match => {
+                                const [count, type] = match.split('*');
+                                if (containerDimensions[type]) {
+                                    const dim = containerDimensions[type];
+                                    dimensionInfo += `
+                                        <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border: 1px solid #c3e6cb;">
+                                            <p><strong>${count} × ${type}:</strong></p>
+                                            <p>单箱尺寸: ${dim.length} × ${dim.width} × ${dim.height}</p>
+                                        </div>
+                                    `;
+                                }
+                            });
+                        }
+                    }
+                }
+                dimensionInfo += '</div>';
+            } else {
+                // 分离式设备
+                dimensionInfo += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">';
+                
+                // MBR单元尺寸
+                dimensionInfo += '<div style="background: #e7f3ff; padding: 15px; border-radius: 8px; border-left: 4px solid #0dcaf0;">';
+                dimensionInfo += '<h4 style="margin-bottom: 10px; color: #0dcaf0;">🏭 MBR单元</h4>';
+                dimensionInfo += `<p><strong>配置：</strong>${membraneEquipment}</p>`;
+                
+                // 解析集装箱信息
+                const containerMatches = membraneEquipment.match(/(\d+)\*(\d+HQ)/g);
+                if (containerMatches) {
+                    containerMatches.forEach(match => {
+                        const [count, type] = match.split('*');
+                        if (containerDimensions[type]) {
+                            const dim = containerDimensions[type];
+                            dimensionInfo += `
+                                <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 5px;">
+                                    <p><strong>${count} × ${type}:</strong></p>
+                                    <p>单箱尺寸: ${dim.length} × ${dim.width} × ${dim.height}</p>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+                dimensionInfo += '</div>';
+                
+                // 生化单元尺寸
+                if (biochemicalEquipment && biochemicalEquipment !== '/') {
+                    dimensionInfo += '<div style="background: #d1e7dd; padding: 15px; border-radius: 8px; border-left: 4px solid #198754;">';
+                    dimensionInfo += '<h4 style="margin-bottom: 10px; color: #198754;">🧪 生化单元</h4>';
+                    dimensionInfo += `<p><strong>配置：</strong>${biochemicalEquipment}</p>`;
+                    
+                    // 检查是否为直接尺寸（如2.43*1.3*2.3）还是集装箱规格
+                    if (biochemicalEquipment.match(/^\d+(\.\d+)?\*\d+(\.\d+)?\*\d+(\.\d+)?$/)) {
+                        // 直接尺寸格式
+                        const dimensions = biochemicalEquipment.split('*');
+                        const volume = (parseFloat(dimensions[0]) * parseFloat(dimensions[1]) * parseFloat(dimensions[2])).toFixed(1);
+                        dimensionInfo += `
+                            <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 5px;">
+                                <p><strong>外形尺寸:</strong></p>
+                                <p>长×宽×高: ${dimensions[0]}m × ${dimensions[1]}m × ${dimensions[2]}m</p>
+                            </div>
+                        `;
+                    } else {
+                        // 集装箱规格格式
+                        const containerMatches = biochemicalEquipment.match(/(\d+)\*(\d+HQ)/g);
+                        if (containerMatches) {
+                            containerMatches.forEach(match => {
+                                const [count, type] = match.split('*');
+                                if (containerDimensions[type]) {
+                                    const dim = containerDimensions[type];
+                                    dimensionInfo += `
+                                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 5px;">
+                                            <p><strong>${count} × ${type}:</strong></p>
+                                            <p>单箱尺寸: ${dim.length} × ${dim.width} × ${dim.height}</p>
+                                        </div>
+                                    `;
+                                }
+                            });
+                        }
+                    }
+                    dimensionInfo += '</div>';
+                }
+                
+                dimensionInfo += '</div>';
+            }
+            
+            return dimensionInfo;
+        }
+    </script>
+</body>
 </html>
